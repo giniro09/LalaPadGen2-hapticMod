@@ -1,0 +1,32 @@
+description: |
+  Azoteq IQS9151 driver placeholder.
+
+compatible: "azoteq,iqs9151"
+
+include: i2c-device.yaml
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: Interrupt GPIO for IQS9151 driver.
+  force-gpios:
+    type: phandle-array
+    required: false
+    description: Optional digital FSR threshold input used for force interaction.
+  fsr-device:
+    type: phandle
+    required: false
+    description: Optional external I2C ADC device used for FSR analog input.
+  fsr-channel:
+    type: int
+    required: false
+    description: Optional channel index for the external I2C ADC FSR input.
+  io-channels:
+    type: phandle-array
+    required: false
+    description: Optional FSR ADC channel used for force interaction input.
+  haptic-device:
+    type: phandle
+    required: false
+    description: Optional DRV2605L haptic device on the same I2C bus.

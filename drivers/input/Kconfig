@@ -1,0 +1,639 @@
+menuconfig INPUT_IQS9151
+    bool "Azoteq IQS9151 driver"
+    default y
+    depends on GPIO
+    depends on I2C
+    depends on INPUT
+    depends on DT_HAS_AZOTEQ_IQS9151_ENABLED
+    help
+      Enable the AZOTEQ IQS9151 trackpad driver.
+
+if INPUT_IQS9151
+
+config INPUT_IQS9151_LOG_LEVEL
+    int "IQS9151 log level"
+    range 0 4
+    default INPUT_LOG_LEVEL if LOG
+    default 0
+    help
+      Log level for the IQS9151 driver module.
+      0: none, 1: err, 2: wrn, 3: inf, 4: dbg.
+      Defaults to INPUT_LOG_LEVEL to follow input subsystem policy.
+
+config INPUT_IQS9151_SUPPRESS_KEY_OUTPUT
+    bool "Suppress IQS9151 key/button output"
+    default n
+    help
+      Diagnostic option that suppresses all key/button events emitted by the
+      IQS9151 driver while leaving relative pointer motion intact. Use this to
+      isolate unexpected click/drag behavior from the trackpad button paths.
+
+config INPUT_IQS9151_SUPPRESS_FORCE_BUTTON_OUTPUT
+    bool "Suppress IQS9151 force button output"
+    default n
+    help
+      Diagnostic option that suppresses only Force-triggered button down/up
+      output while keeping existing tap/tapdrag key paths active. Use this to
+      isolate unexpected drag selection caused by the force interaction path.
+
+config INPUT_IQS9151_FSR_DIAG_MODE
+    bool "Enable IQS9151 FSR-only diagnostic mode"
+    default n
+    help
+      Diagnostic option that lets the FSR trigger the force path without any
+      active trackpad touch. In this mode the driver emits haptics and logs for
+      force enter/release, but does not send Force button down/up.
+
+config INPUT_IQS9151_TOUCH_POSITION_DIAG
+    bool "Enable IQS9151 touch-position diagnostic output"
+    default n
+    help
+      Diagnostic option that suppresses normal IQS9151 gesture output and
+      reports finger1 absolute touch coordinates as relative X/Y samples.
+      Use with the touch-position diagnostic page to find a ghost or stuck
+      touch location without relying on logs.
+
+config INPUT_IQS9151_TOUCH_POSITION_DIAG_RANGE
+    int "IQS9151 touch-position diagnostic output range"
+    range 100 2000
+    default 800
+    depends on INPUT_IQS9151_TOUCH_POSITION_DIAG
+    help
+      Full-scale relative output range used for touch-position diagnosis.
+      The driver maps finger1 coordinates to -range/2 through +range/2.
+
+config INPUT_IQS9151_INIT_PRIORITY
+    int "IQS9151 init priority"
+    default 80
+    help
+      Define the initialization priority for the IQS9151 driver.
+
+choice INPUT_IQS9151_ROTATE
+    prompt "IQS9151 rotate"
+    default INPUT_IQS9151_ROTATE_0
+    help
+      Rotate the trackpad coordinate system (0/90/180/270).
+      Currently not applied by the driver.
+
+config INPUT_IQS9151_ROTATE_0
+    bool "0"
+
+config INPUT_IQS9151_ROTATE_90
+    bool "90"
+
+config INPUT_IQS9151_ROTATE_180
+    bool "180"
+
+config INPUT_IQS9151_ROTATE_270
+    bool "270"
+endchoice
+
+config INPUT_IQS9151_RESOLUTION_X
+    int "IQS9151 X resolution"
+    range 0 4095
+    default 2457
+    help
+      X Resolution (0x11E6).
+      Limited to 0-4095 to match the practical 12-bit trackpad
+      coordinate scale used by the device configuration.
+      Currently not applied by the driver.
+
+config INPUT_IQS9151_RESOLUTION_Y
+    int "IQS9151 Y resolution"
+    range 0 4095
+    default 3072
+    help
+      Y Resolution (0x11E8).
+      Limited to 0-4095 to match the practical 12-bit trackpad
+      coordinate scale used by the device configuration.
+      Currently not applied by the driver.
+
+config INPUT_IQS9151_ATI_TARGETCOUNT
+    int "IQS9151 ATI target count"
+    range 0 1000
+    default 400
+    help
+      Trackpad ATI Target (0x119A).
+      Limited to 0-1000 to avoid unstable behavior.
+      Currently not applied by the driver.
+
+config INPUT_IQS9151_DYNAMIC_FILTER_BOTTOM_SPEED
+    int "IQS9151 dynamic filter bottom speed"
+    range 0 2047
+    default 30
+    help
+      XY Dynamic Filter Bottom Speed (0x11EA).
+      Limited to 0-2047 to stay within the documented trackpad count
+      upper-limit scale.
+      Currently not applied by the driver.
+
+config INPUT_IQS9151_DYNAMIC_FILTER_TOP_SPEED
+    int "IQS9151 dynamic filter top speed"
+    range 0 2047
+    default 511
+    help
+      XY Dynamic Filter Top Speed (0x11EC).
+      Limited to 0-2047 to stay within the documented trackpad count
+      upper-limit scale.
+      Currently not applied by the driver.
+
+config INPUT_IQS9151_DYNAMIC_FILTER_BOTTOM_BETA
+    int "IQS9151 dynamic filter bottom beta"
+    range 0 255
+    default 20
+    help
+      XY Dynamic Filter Bottom Beta (0x11EE).
+      Currently not applied by the driver.
+
+config INPUT_IQS9151_1F_TAP_ENABLE
+    bool "IQS9151 single-finger tap enable"
+    default y
+    help
+      Enable single-finger tap detection in the driver.
+
+config INPUT_IQS9151_1F_TAP_MAX_MS
+    int "IQS9151 single-finger tap max time (ms)"
+    range 1 1000
+    default 250
+    help
+      Maximum down duration for 1F tap detection (driver-side).
+
+config INPUT_IQS9151_1F_TAP_MOVE
+    int "IQS9151 single-finger tap move threshold"
+    range 1 1000
+    default 50
+    help
+      Maximum accumulated movement for 1F tap detection (driver-side).
+
+config INPUT_IQS9151_1F_PRESSHOLD_ENABLE
+    bool "IQS9151 single-finger press/hold enable"
+    default y
+    help
+      Enable single-finger deferred-click/drag behavior in the driver.
+      Behavior: first tap presses BTN0 immediately and keeps it pressed
+      while waiting for a second touch.
+
+config INPUT_IQS9151_1F_TAPDRAG_GAP_MAX_MS
+    int "IQS9151 single-finger deferred-click second-touch max time (ms)"
+    range 1 1000
+    default 160
+    help
+      Maximum time to keep BTN0 pressed after a 1F tap while waiting
+      for a second touch (driver-side).
+
+config INPUT_IQS9151_CURSOR_INERTIA_ENABLE
+    bool "IQS9151 cursor inertia enable"
+    default y
+    help
+      Enable cursor inertia (driver-side).
+
+config INPUT_IQS9151_CURSOR_INERTIA_DECAY
+    int "IQS9151 cursor inertia decay"
+    range 0 1000
+    default 950
+    help
+      Cursor inertia decay (driver-side).
+
+config INPUT_IQS9151_CURSOR_INERTIA_RECENT_WINDOW_MS
+    int "IQS9151 cursor inertia recent window (ms)"
+    range 1 500
+    default 60
+    help
+      Time window used to evaluate recent single-finger motion before
+      allowing cursor inertia to start.
+
+config INPUT_IQS9151_CURSOR_INERTIA_STALE_GAP_MS
+    int "IQS9151 cursor inertia stale gap (ms)"
+    range 1 500
+    default 35
+    help
+      Maximum allowed time from the last single-finger motion sample to
+      finger release for cursor inertia to start.
+
+config INPUT_IQS9151_CURSOR_INERTIA_MIN_SAMPLES
+    int "IQS9151 cursor inertia minimum recent samples"
+    range 1 12
+    default 2
+    help
+      Minimum count of recent single-finger motion samples required to
+      start cursor inertia.
+
+config INPUT_IQS9151_CURSOR_INERTIA_MIN_AVG_SPEED
+    int "IQS9151 cursor inertia minimum average speed"
+    range 1 500
+    default 10
+    help
+      Minimum average recent single-finger speed required to start
+      cursor inertia.
+
+config INPUT_IQS9151_FORCE_THRESHOLD
+    int "IQS9151 FSR force threshold"
+    range 1 32767
+    default 700
+    help
+      Minimum force value required to enter force mode.
+
+      In baseline mode, this is the delta from the touch-start baseline.
+      In absolute mode, this is the distance from the startup idle reading.
+
+config INPUT_IQS9151_FORCE_RELEASE_THRESHOLD
+    int "IQS9151 FSR release threshold"
+    range 1 32767
+    default 450
+    help
+      Minimum force value required to stay in force mode after hysteresis is
+      applied.
+
+      In baseline mode, this is the delta from the touch-start baseline.
+      In absolute mode, this is the distance from the startup idle reading.
+
+config INPUT_IQS9151_FORCE_THRESHOLD_2F
+    int "IQS9151 FSR two-finger force threshold"
+    range 1 32767
+    default INPUT_IQS9151_FORCE_THRESHOLD
+    help
+      Minimum force value required to enter force mode while two fingers are
+      touching the trackpad. This can be higher than the one-finger threshold
+      because normal two-finger contact tends to load the FSR more.
+
+config INPUT_IQS9151_FORCE_RELEASE_THRESHOLD_2F
+    int "IQS9151 FSR two-finger release threshold"
+    range 1 32767
+    default INPUT_IQS9151_FORCE_RELEASE_THRESHOLD
+    help
+      Minimum force value required to stay in two-finger force mode after
+      hysteresis is applied.
+
+config INPUT_IQS9151_FORCE_THRESHOLD_3F
+    int "IQS9151 FSR three-finger force threshold"
+    range 1 32767
+    default INPUT_IQS9151_FORCE_THRESHOLD_2F
+    help
+      Minimum force value required to enter force mode while three fingers are
+      touching the trackpad. This can be higher than the two-finger threshold
+      because normal three-finger contact tends to load the FSR more.
+
+config INPUT_IQS9151_FORCE_RELEASE_THRESHOLD_3F
+    int "IQS9151 FSR three-finger release threshold"
+    range 1 32767
+    default INPUT_IQS9151_FORCE_RELEASE_THRESHOLD_2F
+    help
+      Minimum force value required to stay in three-finger force mode after
+      hysteresis is applied.
+
+config INPUT_IQS9151_FORCE_BASELINE_SETTLE_MS
+    int "IQS9151 FSR baseline settle window (ms)"
+    range 0 200
+    default 60
+    help
+      Short window after touch start during which the FSR baseline is allowed
+      to settle with the normal finger-landing pressure ramp before force
+      detection starts.
+
+config INPUT_IQS9151_FORCE_INVERT_ANALOG
+    bool "IQS9151 invert analog FSR delta polarity"
+    default n
+    help
+      Interpret lower analog readings as stronger force. Enable this when the
+      FSR divider is wired such that pressing the sensor pulls the ADC value
+      downward instead of upward.
+
+config INPUT_IQS9151_FORCE_USE_ABSOLUTE
+    bool "IQS9151 use absolute analog force thresholds"
+    default n
+    help
+      Use the startup idle reading as the zero-force reference and measure
+      force as distance from that point, instead of computing a delta from a
+      touch-start baseline. When INPUT_IQS9151_FORCE_INVERT_ANALOG is enabled,
+      the driver interprets lower raw ADC readings as stronger force.
+
+config INPUT_IQS9151_FORCE_ABSOLUTE_STARTUP_CAL_MS
+    int "IQS9151 absolute-force startup calibration window (ms)"
+    range 0 5000
+    default 600
+    help
+      When absolute analog force thresholds are enabled, reserve this startup
+      window to learn the unloaded FSR idle point before force detection is
+      allowed to engage. This helps when the mechanism applies preload at boot.
+
+config INPUT_IQS9151_FORCE_ENTER_DEBOUNCE_MS
+    int "IQS9151 FSR force enter debounce (ms)"
+    range 0 100
+    default 25
+    help
+      Minimum time the FSR delta must stay above the force threshold before
+      force mode is entered.
+
+config INPUT_IQS9151_FORCE_RELEASE_DEBOUNCE_MS
+    int "IQS9151 FSR force release debounce (ms)"
+    range 0 100
+    default 35
+    help
+      Minimum time the FSR delta must stay below the release threshold before
+      force mode is released.
+
+config INPUT_IQS9151_FORCE_MOVE_THRESHOLD
+    int "IQS9151 force movement threshold"
+    range 1 500
+    default 20
+    help
+      Relative movement threshold used to classify a force press as a
+      moving-context precision interaction.
+
+config INPUT_IQS9151_PRECISION_ENABLE
+    bool "IQS9151 precision mode enable"
+    default y
+    help
+      Enable moving-context force presses to enter precision mode. Disable
+      this temporarily to isolate static-force click/drag behavior without
+      changing the underlying force detection path.
+
+config INPUT_IQS9151_CARET_ENABLE
+    bool "IQS9151 caret mode enable"
+    default y
+    help
+      Enable the static one-finger force hold path that transitions into
+      caret mode.
+
+config INPUT_IQS9151_CARET_HOLD_MS
+    int "IQS9151 caret hold delay (ms)"
+    range 50 1000
+    default 300
+    help
+      Quiet time after a 1-finger force press before entering caret mode.
+
+config INPUT_IQS9151_CARET_DEADZONE
+    int "IQS9151 caret deadzone"
+    range 1 500
+    default 80
+    help
+      Distance from the caret center before directional key output starts.
+
+config INPUT_IQS9151_CARET_REPEAT_INITIAL_MS
+    int "IQS9151 caret repeat initial delay (ms)"
+    range 50 1000
+    default 220
+    help
+      Initial delay before caret mode starts repeating a direction.
+
+config INPUT_IQS9151_CARET_REPEAT_BASE_MS
+    int "IQS9151 caret repeat base interval (ms)"
+    range 10 500
+    default 90
+    help
+      Base interval used for caret repeats before force/movement speed-up.
+
+config INPUT_IQS9151_HAPTIC_FSR_GUARD_MS
+    int "IQS9151 haptic-to-FSR guard window (ms)"
+    range 0 100
+    default 25
+    help
+        Hold the last stable FSR value for a short window after haptic playback
+        so mechanical coupling between the LRA and FSR does not cause false
+        force transitions.
+
+config INPUT_IQS9151_TAP_HAPTIC_ENABLE
+    bool "IQS9151 tap haptic enable"
+    default y
+    help
+        Play haptic feedback for normal tap clicks. Force, Caret, and other
+        mode haptics are controlled separately and are not affected by this
+        option.
+
+config INPUT_IQS9151_STARTUP_HAPTIC_ENABLE
+    bool "IQS9151 startup haptic enable"
+    default n
+    help
+        Play a short haptic tick after the IQS9151 driver has completed
+        initialization and enabled interrupts. This is a readiness cue for
+        the trackpad side, not a general keyboard boot sound.
+
+config INPUT_IQS9151_TAP_REPEAT_DIAG
+    bool "IQS9151 tap haptic repeat diagnostic"
+    default n
+    help
+        Repeats the tap haptic a few times after a tap. This is useful only
+        for mechanical bring-up to check whether vibration really reaches the
+        fingertip.
+
+config INPUT_IQS9151_TAP_REPEAT_DIAG_COUNT
+    int "IQS9151 tap haptic repeat diagnostic count"
+    range 1 20
+    default 6
+    depends on INPUT_IQS9151_TAP_REPEAT_DIAG
+    help
+        Total number of tap haptic pulses to play when the diagnostic mode is
+        enabled, including the first immediate pulse.
+
+config INPUT_IQS9151_TAP_REPEAT_DIAG_INTERVAL_MS
+    int "IQS9151 tap haptic repeat diagnostic interval (ms)"
+    range 20 1000
+    default 120
+    depends on INPUT_IQS9151_TAP_REPEAT_DIAG
+    help
+        Delay between repeated tap haptic pulses in diagnostic mode.
+
+config INPUT_IQS9151_CURSOR_HAPTIC_TICK_ENABLE
+    bool "IQS9151 cursor haptic tick enable"
+    default n
+    help
+        Play a short haptic tick as one-finger cursor movement accumulates.
+        This is useful for experimenting with Steam Controller / Steam Deck
+        style textured touch feedback.
+
+config INPUT_IQS9151_CURSOR_HAPTIC_TICK_STEP
+    int "IQS9151 cursor haptic tick step"
+    range 1 1000
+    default 120
+    depends on INPUT_IQS9151_CURSOR_HAPTIC_TICK_ENABLE
+    help
+        Motion amount required before one cursor haptic tick is emitted.
+        Smaller values feel more textured but can become noisy.
+
+config INPUT_IQS9151_HAPTIC_STATE_DIAG
+    bool "IQS9151 haptic state diagnostic"
+    default n
+    help
+        Use distinct haptic pulse counts for Force, Precision, and Caret state
+        transitions so state changes can be diagnosed without logs.
+
+config INPUT_IQS9151_HAPTIC_STATE_DIAG_GAP_US
+    int "IQS9151 haptic state diagnostic pulse gap (us)"
+    range 500 20000
+    default 2500
+    depends on INPUT_IQS9151_HAPTIC_STATE_DIAG
+    help
+        Extra gap between state-diagnostic haptic pulses.
+
+config INPUT_IQS9151_2F_TAP_ENABLE
+    bool "IQS9151 two-finger tap enable"
+    default y
+    help
+      Enable two-finger tap detection in the driver.
+
+config INPUT_IQS9151_2F_TAP_MAX_MS
+    int "IQS9151 two-finger tap max time (ms)"
+    range 1 1000
+    default 250
+    help
+      Maximum down duration for 2F tap detection (driver-side).
+
+config INPUT_IQS9151_2F_TAP_MOVE
+    int "IQS9151 two-finger tap move threshold"
+    range 1 1000
+    default 50
+    help
+      Maximum centroid/distance movement for 2F tap detection (driver-side).
+
+config INPUT_IQS9151_2F_PRESSHOLD_ENABLE
+    bool "IQS9151 two-finger press/hold enable"
+    default y
+    help
+      Enable two-finger deferred-click/drag behavior in the driver.
+      Behavior: first 2F tap presses BTN1 immediately and keeps it pressed
+      while waiting for a second 2F touch.
+
+config INPUT_IQS9151_2F_TAPDRAG_GAP_MAX_MS
+    int "IQS9151 two-finger deferred-click second-touch max time (ms)"
+    range 1 1000
+    default 200
+    help
+      Maximum time to keep BTN1 pressed after a 2F tap while waiting
+      for a second 2F touch (driver-side).
+
+config INPUT_IQS9151_SCROLL_Y_ENABLE
+    bool "IQS9151 vertical scroll enable"
+    default y
+    help
+      Enable driver-side vertical two-finger scroll.
+
+config INPUT_IQS9151_SCROLL_X_ENABLE
+    bool "IQS9151 horizontal scroll enable"
+    default y
+    help
+      Enable driver-side horizontal two-finger scroll.
+
+config INPUT_IQS9151_2F_SCROLL_START_MOVE
+    int "IQS9151 two-finger scroll start threshold"
+    range 1 2000
+    default 50
+    help
+      Movement threshold to start 2F scroll mode (driver-side).
+
+config INPUT_IQS9151_SCROLL_INERTIA_ENABLE
+    bool "IQS9151 scroll inertia enable"
+    default y
+    help
+      Enable scroll inertia (driver-side).
+
+config INPUT_IQS9151_SCROLL_INERTIA_DECAY
+    int "IQS9151 scroll inertia decay"
+    range 0 1000
+    default 980
+    help
+      Scroll inertia decay (driver-side).
+
+config INPUT_IQS9151_SCROLL_INERTIA_RECENT_WINDOW_MS
+    int "IQS9151 scroll inertia recent window (ms)"
+    range 1 500
+    default 60
+    help
+      Time window used to evaluate recent two-finger scroll motion
+      before allowing scroll inertia to start.
+
+config INPUT_IQS9151_SCROLL_INERTIA_STALE_GAP_MS
+    int "IQS9151 scroll inertia stale gap (ms)"
+    range 1 500
+    default 35
+    help
+      Maximum allowed time from the last two-finger scroll sample to
+      release for scroll inertia to start.
+
+config INPUT_IQS9151_SCROLL_INERTIA_MIN_SAMPLES
+    int "IQS9151 scroll inertia minimum recent samples"
+    range 1 12
+    default 1
+    help
+      Minimum count of recent two-finger scroll samples required to
+      start scroll inertia.
+
+config INPUT_IQS9151_SCROLL_INERTIA_MIN_AVG_SPEED
+    int "IQS9151 scroll inertia minimum average speed"
+    range 1 500
+    default 4
+    help
+      Minimum average recent two-finger scroll speed required to start
+      scroll inertia.
+
+config INPUT_IQS9151_2F_PINCH_ENABLE
+    bool "IQS9151 two-finger pinch enable"
+    default y
+    help
+      Enable driver-side two-finger pinch detection.
+
+config INPUT_IQS9151_2F_PINCH_START_DISTANCE
+    int "IQS9151 two-finger pinch start threshold"
+    range 1 2000
+    default 100
+    help
+      Distance-delta threshold to start 2F pinch mode (driver-side).
+
+config INPUT_IQS9151_2F_PINCH_WHEEL_GAIN_X10
+    int "IQS9151 two-finger pinch wheel gain (x10)"
+    range 1 100
+    default 40
+    help
+      Gain for 2F pinch REL_WHEEL output inside the driver.
+      10 = 1.0x, 20 = 2.0x, 5 = 0.5x.
+
+config INPUT_IQS9151_3F_TAP_ENABLE
+    bool "IQS9151 three-finger tap enable"
+    default y
+    help
+      Enable three-finger tap (driver-side).
+
+config INPUT_IQS9151_3F_TAP_MAX_MS
+    int "IQS9151 three-finger tap max time (ms)"
+    range 1 1000
+    default 200
+    help
+      Maximum down duration for 3F tap detection (driver-side).
+
+config INPUT_IQS9151_3F_TAP_MOVE
+    int "IQS9151 three-finger tap move threshold"
+    range 1 1000
+    default 35
+    help
+      Maximum finger1 tracked movement for 3F tap detection (driver-side).
+
+config INPUT_IQS9151_3F_PRESSHOLD_ENABLE
+    bool "IQS9151 three-finger press/hold enable"
+    default y
+    help
+      Enable three-finger deferred-click/drag behavior in the driver.
+      Behavior: first 3F tap presses BTN2 immediately and keeps it pressed
+      while waiting for a second 3F touch.
+
+config INPUT_IQS9151_3F_TAPDRAG_GAP_MAX_MS
+    int "IQS9151 three-finger deferred-click second-touch max time (ms)"
+    range 1 1000
+    default 200
+    help
+      Maximum time to keep BTN2 pressed after a 3F tap while waiting
+      for a second 3F touch (driver-side).
+
+config INPUT_IQS9151_3F_SWIPE_THRESHOLD
+    int "IQS9151 three-finger swipe threshold"
+    range 0 1000
+    default 200
+    help
+      Three-finger swipe threshold (driver-side).
+
+config INPUT_IQS9151_TEST
+    bool "IQS9151 test hooks"
+    depends on ZTEST
+    default n
+    help
+      Expose IQS9151 internal test APIs and event hooks for ZTEST.
+
+endif
