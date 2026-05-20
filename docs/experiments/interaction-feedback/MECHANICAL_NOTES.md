@@ -18,7 +18,7 @@
 - FSR土台
 
 トラックパッドセンサ基板裏に絶縁テープを貼る。意味があるかは不明。。私は4重くらいに貼ってます。
-![PAD lid reference](./images/Ref_PADlid.png)
+<img src="./images/Ref_PADlid.png" alt="PAD lid reference" width="600">
 
 
 ADS1115 をトラックパッド下の空間に配置、両面テープ固定。
