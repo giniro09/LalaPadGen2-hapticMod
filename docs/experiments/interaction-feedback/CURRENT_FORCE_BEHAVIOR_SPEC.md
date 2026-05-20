@@ -1,9 +1,17 @@
-# Current Force / Precision / Caret Behavior
+# 現行 Force / Precision / Caret 仕様
 
-対象コミット: 現在の作業ツリー
+この文書は、LaLaPad Gen2 haptic / force feedback 実験における現状の機能メモです。
+キーマップ全体や通常ジェスチャの網羅は対象外とし、独自追加した Force / Precision / Caret と、その触覚フィードバックを中心に記載します。
 
-この文書は、LaLaPad Gen2 の現時点の Force / Precision / Caret の実効仕様をまとめる。キーマップ全体や通常ジェスチャの網羅は対象外とし、独自追加した Force / Precision / Caret と、その触覚フィードバックを中心に記載する。
+## 用語
 
+- **Force**: FSR の圧力を使って、通常のタップとは別系統で発火させる強押し入力。
+- **Caret**: テキストカーソル移動を意図し、ポインタ移動の代わりに矢印キー入力へ切り替えるモード。
+  一本指Forceをカーソル静止したまま一定時間入力すると遷移し、そのまま指を動かすと上下左右の矢印入力を行います。
+- **Precision**: Force 中にポインタ速度を落として精密操作するためのモード。現状無効
+- **FSR**: 押圧を電気信号として読むセンサ
+- **LRA**: 触覚フィードバック用の振動子
+  
 ## 現在の有効状態
 
 - Force: 有効
@@ -14,20 +22,20 @@
 
 左右どちらも FSR は ADS1115 経由で読み、Force 量は起動時/無接触時の idle 値からの距離として扱う。
 
-## Force Threshold
+## Force 閾値
 
 `CONFIG_INPUT_IQS9151_FORCE_USE_ABSOLUTE=y` のため、Force 判定はタッチ開始時差分ではなく、idle 基準値からの絶対距離で見る。起動直後 `1500ms` は idle 値を学習し、その後も無接触かつ Force 非アクティブ中は idle 値をゆっくり追従させる。
 
-| Side / fingers | enter threshold | release threshold |
+| 側 / 指本数 | 進入閾値 | 解除閾値 |
 | --- | ---: | ---: |
-| Right 1本指 | `15000` | `9500` |
-| Right 2本指 | `16000` | `10500` |
-| Right 3本指 | `17000` | `11500` |
-| Left 1本指 | `18000` | `11500` |
-| Left 2本指 | `19000` | `12500` |
-| Left 3本指 | `20000` | `13500` |
+| 右 1本指 | `15000` | `9500` |
+| 右 2本指 | `16000` | `10500` |
+| 右 3本指 | `17000` | `11500` |
+| 左 1本指 | `18000` | `11500` |
+| 左 2本指 | `19000` | `12500` |
+| 左 3本指 | `20000` | `13500` |
 
-Force enter debounce は `5ms`、release debounce は `35ms`。Force release 後は `40ms` の rearm block を置く。Force-owned hold drag 中は途中で途切れにくくするため、実効 release threshold を通常値の `3 / 4` に下げる。
+Force 進入デバウンスは `5ms`、解除デバウンスは `35ms`。Force release 後は `40ms` の再アーム待ちを置く。Force-owned hold drag 中は途中で途切れにくくするため、実効解除閾値を通常値の `3 / 4` に下げる。
 
 ## Force 出力
 
@@ -41,9 +49,9 @@ Force enter debounce は `5ms`、release debounce は `35ms`。Force release 後
 
 3本指 Force は現時点では便利寄りの別機能枠として残している。実際の意味は `INPUT_BTN_5` の割り当て先に依存する。
 
-## Haptic
+## 触覚フィードバック
 
-Force click 用 haptic は DRV2605L の RTP mode で短い click 感を再生する。
+Force click 用の触覚フィードバックは DRV2605L の RTP mode で短い click 感を再生する。
 
 - kick: `0x7F` を `2300us`
 - brake: `0x88` を `1600us`
@@ -63,9 +71,9 @@ Caret は `zmk,input-processor-force-caret` が中央で処理する。左右の
 
 設定値:
 
-- Caret hold: `450ms`
-- Caret deadzone: `80`
-- Caret candidate の drag cancel threshold: `18`
+- Caret 長押し時間: `450ms`
+- Caret デッドゾーン: `80`
+- Caret 候補の drag cancel 閾値: `18`
 
 1本指 Force が静止文脈で成立すると、まず `INPUT_BTN_0` の Force-owned hold として扱う。そのまま `450ms` 続いた場合、中央 processor が primary hold を release し、Caret active に入る。
 
@@ -73,7 +81,7 @@ Caret 候補中に単発 REL 移動量が `18` 以上出た場合は、Caret 候
 
 Caret active 中は pointer REL_X / REL_Y を通常 pointer として出さず、蓄積量が `80` を超えるたびに `LEFT / RIGHT / UP / DOWN` のいずれかを1回 tap する。1イベントあたり最大4ステップまで出す。
 
-Caret haptic:
+Caret 時の触覚フィードバック:
 
 - Caret に入る瞬間: Caret を成立させた側のトラックパッドで Force double click haptic
 - Caret 中に1文字分カーソル移動した瞬間: 実際に移動入力を出した側のトラックパッドで cursor tick haptic
@@ -107,3 +115,5 @@ TapDrag 中に Force threshold を超えた場合は `overlay_only` として扱
 - 2本指 Force が primary double click として出て、「カカッ」と鳴ること
 - 3本指 Force の割り当てが実使用上便利かどうか
 - 通常 tap では haptic が鳴らないこと
+
+

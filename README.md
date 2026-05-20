@@ -1,81 +1,56 @@
-# LaLaPad Gen2 Experimental Build Log
-
-This repository is a public snapshot of my current LaLaPad Gen2 ZMK firmware work.
-
-It is intentionally published as an experimental build log and customization repo, not as an official manual or official support channel.
-
-Use it at your own risk. Hardware wiring, force thresholds, haptic tuning, and split behavior here are tailored to one ongoing experiment and may not be correct for another build.
-
-## 日本語補足
+# LaLaPad Gen2 実験ビルドログ
 
 このリポジトリは、LaLaPad Gen2 向けの個人的な ZMK カスタム実験の最新版スナップショットです。
 
 - 公式の手順書ではありません
-- 実験ログ / build log として公開しています
+- 実験ログ / ビルドログとして公開しています
 - 再現や流用は自己責任でお願いします
 - 元プロジェクトの公式見解やサポート窓口ではありません
 
-元の LaLaPad Gen2 プロジェクトおよびそのベースとなる構成・発想に対して、敬意とクレジットを明記したうえで公開しています。
+元の LaLaPad Gen2 プロジェクトおよび、そのベースとなる構成・発想に対して、敬意とクレジットを明記したうえで公開しています。
 
-## Status
+## このリポジトリの位置づけ
 
-- Experimental build log
-- Latest known working snapshot only
-- Not an official LaLaPad Gen2 repository
-- Not affiliated with the original project maintainer beyond using their public work as the base
+- 実験ビルドログ
+- 現時点の既知の動作スナップショット
+- LaLaPad Gen2 の公式リポジトリではない
+- 元のプロジェクト管理者とは独立した、個人による下流カスタム実験
 
-## Credits
+同じ改造を試したい場合は、以下の文書を参照してください。
+- [配線・部品メモ](./docs/experiments/interaction-feedback/HARDWARE_AND_PIN_PLAN.md)
+- [機構メモ](./docs/experiments/interaction-feedback/MECHANICAL_NOTES.md)
+- [Force / Caret の現行仕様](./docs/experiments/interaction-feedback/CURRENT_FORCE_BEHAVIOR_SPEC.md)
 
-LaLaPad Gen2 itself, the original project structure, and the upstream firmware base are credited to the original creator and maintainer:
+## 3Dモデル
 
+実験用に改造した3Dパーツは [`hardware/modified-parts/`](./hardware/modified-parts/) に置いています。
+
+
+## ファームウェアに関する注意
+
+このリポジトリには、私の個人試作機で使用しているファームウェア / 設定ファイルが含まれています。
+
+ただし、これはあくまで実験中のスナップショットであり、他の環境での動作を保証するものではありません。  
+ハードウェアの個体差、配線、部品、組み立て精度、ZMK環境などによって、動作しない、または異なる挙動になる可能性があります。
+
+このファームウェアを書き込むことで、入力異常、誤動作、ハプティックの誤作動、バッテリー消費増加、その他の問題が発生する可能性があります。  
+使用・改変・書き込みは自己責任でお願いします。
+
+この実験ファームウェアおよびハードウェア改造について、元のLaLaPad Gen2制作者様・メンテナの方へサポート依頼を送らないでください。
+
+## クレジット
+
+LaLaPad Gen2 本体、元のプロジェクト構成、上流のファームウェア基盤については、元の制作者・管理者に帰属します。
 - ShiniNet / LaLaPad Gen2
-- Upstream repository references are preserved in `config/west.yml` and the project history/docs where relevant
+- 上流参照先は `config/west.yml` や関連文書に残しています
 
-This public snapshot is a downstream personal customization layer on top of that base.
+このリポジトリは、その上に個人的なカスタム実験を積み上げたものです。
 
-## License
+## ライセンス
 
-This snapshot keeps the repository `LICENSE` file as-is and does not try to override the upstream license terms.
+このスナップショットでは、リポジトリの `LICENSE` をそのまま維持しています。
+上流側のライセンス条件を上書きする意図はありません。
 
-If you publish derivatives, keep the license notice intact and also verify the licenses of any upstream dependencies fetched through `west`.
+派生物を公開する場合は、ライセンス表記を維持したうえで、`west` で取得する依存物のライセンスも各自で確認してください。
 
-## What Is Included
 
-- Current shield/config files for `lalapadgen2`
-- Current custom drivers, behaviors, and input processors
-- Experimental documentation under `docs/experiments/interaction-feedback/`
-- Optional local diagnostic tools under `tools/`
-- GitHub Actions build workflow
-
-## What Is Intentionally Not Included
-
-- Old private workspace/editor metadata
-- Local dependency checkouts under `deps/`
-- Internal agent instruction files
-- Private development history cleanup or rewritten git history
-
-## Build Notes
-
-This repo expects the usual ZMK user-config style workflow.
-
-Typical structure:
-
-1. Initialize/update dependencies with `west` using `config/west.yml`
-2. Build with the included `build.yaml`
-3. Flash the generated artifacts to the appropriate half
-
-The exact hardware assumptions and wiring notes are documented in:
-
-- `docs/experiments/interaction-feedback/PROJECT_CONTEXT.md`
-- `docs/experiments/interaction-feedback/HARDWARE_AND_PIN_PLAN.md`
-- `docs/experiments/interaction-feedback/CURRENT_FORCE_BEHAVIOR_SPEC.md`
-- `docs/experiments/interaction-feedback/EXPERIMENTAL_BOM.md`
-
-## Warning
-
-This is not a canonical source of truth for LaLaPad Gen2 assembly or support.
-
-If you are looking for the original project, the safest interpretation is:
-
-- upstream project for the base hardware and official guidance
-- this repo for one experimental downstream firmware state
